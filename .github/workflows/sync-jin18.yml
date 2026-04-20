@@ -2,29 +2,36 @@ name: 定时同步 jin18.txt 到 Gitee
 
 on:
   schedule:
-    - cron: '0 */6 * * *'     # 每 6 小时同步一次（北京时间大概每 6 小时）
-  workflow_dispatch:          # 支持手动点击运行
+    - cron: '0 */6 * * *'     # 每 6 小时一次，可改成 '0 0 * * *'（每天 0 点）
+  workflow_dispatch:          # 允许手动触发
+
+permissions:
+  contents: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Gitee 仓库
+      - name: Checkout Gitee 仓库（带 Token 认证）
         uses: actions/checkout@v4
         with:
-          repository: z33ss/box     # ← 改成你的 Gitee 仓库
+          repository: z33ss/box     # ← 必须修改！
           token: ${{ secrets.GITEE_TOKEN }}
           ref: main
           persist-credentials: true
+
+      - name: 配置 Git 凭证（解决 Username 错误）
+        run: |
+          git config --global url."https://${{ secrets.GITEE_TOKEN }}@gitee.com/".insteadOf "https://gitee.com/"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
 
       - name: 下载最新 jin18.txt
         run: |
           curl -f -L -o jin18.txt "https://raw.githubusercontent.com/hafrey1/LunaTV-config/refs/heads/main/jin18.txt"
 
-      - name: 提交并推送更新
+      - name: 提交并推送到 Gitee
         run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
           git add jin18.txt
-          git commit -m "自动同步 jin18.txt $(date +'%Y-%m-%d %H:%M:%S')" || echo "没有更新"
+          git commit -m "自动同步 jin18.txt $(date +'%Y-%m-%d %H:%M:%S')" || echo "没有内容变化，跳过提交"
           git push
