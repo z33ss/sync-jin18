@@ -12,7 +12,7 @@ jobs:
       - name: Checkout Gitee 仓库
         uses: actions/checkout@v4
         with:
-          repository: 你的Gitee用户名/tv-jin18     # ← 改成你的 Gitee 仓库
+          repository: z33ss/box     # ← 改成你的 Gitee 仓库
           token: ${{ secrets.GITEE_TOKEN }}
           ref: main
           persist-credentials: true
