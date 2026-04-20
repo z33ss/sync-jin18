@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Download jin18.txt from remote
         run: |
-          wget -O jin18.txt "https://raw.githubusercontent.com/hafrey1/LunaTV-config/refs/heads/main/jin18.txt"
+          wget -O jin18.txt "https://moontv.yichen.eu.org/api/tvbox/subscribe?token=ce9e99842689073cf3a3a1a854ff84f8"
 
       - name: Push to Gitee
         run: |
