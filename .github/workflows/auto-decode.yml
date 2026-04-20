@@ -1,0 +1,42 @@
+name: Auto Decode LunaTV jin18
+on:
+  schedule:
+    - cron: '*/59 * * * *'  # 每15分钟更新一次
+  workflow_dispatch:        # 允许手动点一下运行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install base58
+        run: pip install base58 requests
+
+      - name: Fetch and decode
+        run: |
+          cat > decode.py << EOF
+          import requests
+          import base58
+
+          url = "https://raw.githubusercontent.com/hafrey1/LunaTV-config/main/jin18.txt"
+          r = requests.get(url, timeout=10)
+          r.raise_for_status()
+          data = r.text.strip()
+
+          raw = base58.b58decode(data)
+          txt = raw.decode('utf-8')
+
+          with open("jin18.txt", "w", encoding="utf-8") as f:
+              f.write(txt)
+          EOF
+
+          python decode.py
+
+      - name: Commit and push
+        run: |
+          git config --global user.name "Auto Action"
+          git config --global user.email "action@github.com"
+          git add jin18.txt
+          git commit -m "Auto update decoded jin18" || exit 0
+          git push https://${{ github.token }}@github.com/${{ github.repository }}.git HEAD:main
