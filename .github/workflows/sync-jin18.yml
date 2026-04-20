@@ -2,7 +2,7 @@ name: Sync jin18.txt from GitHub to Gitee
 
 on:
   schedule:
-    - cron: "0 */6 * * *"  # 每6小时同步一次
+    - cron: "0 */2 * * *"  # 每6小时同步一次
   workflow_dispatch:       # 允许手动触发
 
 jobs:
