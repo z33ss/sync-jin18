@@ -1,42 +1,50 @@
 name: Auto Decode LunaTV jin18
 on:
   schedule:
-    - cron: '*/59 * * * *'  # 每15分钟更新一次
-  workflow_dispatch:        # 允许手动点一下运行
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install base58
+        with:
+          fetch-depth: 1
+
+      - name: Install dependencies
         run: pip install base58 requests
 
       - name: Fetch and decode
         run: |
-          cat > decode.py << EOF
+          cat > decode.py << 'EOF'
           import requests
           import base58
 
+          # 下载加密文件
           url = "https://raw.githubusercontent.com/hafrey1/LunaTV-config/main/jin18.txt"
           r = requests.get(url, timeout=10)
           r.raise_for_status()
-          data = r.text.strip()
+          enc = r.text.strip()
 
-          raw = base58.b58decode(data)
-          txt = raw.decode('utf-8')
+          # 解码
+          raw = base58.b58decode(enc)
+          json_data = raw.decode("utf-8")
 
-          with open("jin18.txt", "w", encoding="utf-8") as f:
-              f.write(txt)
+          # 输出最终文件
+          with open("lunatv.json", "w", encoding="utf-8") as f:
+              f.write(json_data)
+          print("✅ 解码完成，生成 lunatv.json")
           EOF
 
-          python decode.py
+          python3 decode.py
 
       - name: Commit and push
         run: |
-          git config --global user.name "Auto Action"
+          git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add jin18.txt
-          git commit -m "Auto update decoded jin18" || exit 0
-          git push https://${{ github.token }}@github.com/${{ github.repository }}.git HEAD:main
+          git add lunatv.json
+          git commit -m "Auto update lunatv.json" || exit 0
+          git push
