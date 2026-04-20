@@ -1,37 +1,49 @@
-name: 定时同步 jin18.txt 到 Gitee
+name: Sync GitHub File to Gitee (Token Only)
 
+# 定时：每天北京时间 8 点
 on:
   schedule:
-    - cron: '0 */6 * * *'     # 每 6 小时一次，可改成 '0 0 * * *'（每天 0 点）
-  workflow_dispatch:          # 允许手动触发
-
-permissions:
-  contents: write
+    - cron: "0 0 * * *"
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Gitee 仓库（带 Token 认证）
+      - name: Checkout GitHub 代码
         uses: actions/checkout@v4
-        with:
-          repository: z33ss/box     # ← 必须修改！
-          token: ${{ secrets.GITEE_TOKEN }}
-          ref: main
-          persist-credentials: true
 
-      - name: 配置 Git 凭证（解决 Username 错误）
+      # ======================
+      # 你只需要修改下面 4 项
+      # ======================
+      - name: Sync to Gitee
         run: |
-          git config --global url."https://${{ secrets.GITEE_TOKEN }}@gitee.com/".insteadOf "https://gitee.com/"
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          # 1. Gitee 用户名
+          GITEE_USER="z33ss"
+          
+          # 2. Gitee 仓库名
+          GITEE_REPO="box"
+          
+          # 3. 要同步的文件（GitHub 里的路径）
+          SYNC_FILE="jin18.txt"
+          
+          # 4. 同步到 Gitee 的路径（可一样）
+          DEST_FILE="jin18.txt"
 
-      - name: 下载最新 jin18.txt
-        run: |
-          curl -f -L -o jin18.txt "https://raw.githubusercontent.com/hafrey1/LunaTV-config/refs/heads/main/jin18.txt"
+          # ======================
+          # 下面不用动
+          # ======================
+          git config --global user.name "Auto Sync"
+          git config --global user.email "sync@github.com"
 
-      - name: 提交并推送到 Gitee
-        run: |
-          git add jin18.txt
-          git commit -m "自动同步 jin18.txt $(date +'%Y-%m-%d %H:%M:%S')" || echo "没有内容变化，跳过提交"
+          # 克隆 Gitee 仓库（用 Token 免密）
+          git clone https://${GITEE_USER}:${{ secrets.GITEE_TOKEN }}@gitee.com/${GITEE_USER}/${GITEE_REPO}.git gitee_repo
+
+          # 复制文件
+          cp -f "$SYNC_FILE" "gitee_repo/$DEST_FILE"
+
+          # 提交并推送
+          cd gitee_repo
+          git add .
+          git commit -m "Auto sync from GitHub" || exit 0
           git push
