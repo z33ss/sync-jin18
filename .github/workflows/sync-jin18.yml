@@ -1,49 +1,31 @@
-name: Sync GitHub File to Gitee (Token Only)
+name: Sync jin18.txt from GitHub to Gitee
 
-# 定时：每天北京时间 8 点
 on:
   schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch:  # 允许手动触发
+    - cron: "0 */6 * * *"  # 每6小时同步一次
+  workflow_dispatch:       # 允许手动触发
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout GitHub 代码
-        uses: actions/checkout@v4
-
-      # ======================
-      # 你只需要修改下面 4 项
-      # ======================
-      - name: Sync to Gitee
+      - name: Download jin18.txt from remote
         run: |
-          # 1. Gitee 用户名
-          GITEE_USER="z33ss"
-          
-          # 2. Gitee 仓库名
-          GITEE_REPO="box"
-          
-          # 3. 要同步的文件（GitHub 里的路径）
-          SYNC_FILE="jin18.txt"
-          
-          # 4. 同步到 Gitee 的路径（可一样）
-          DEST_FILE="jin18.txt"
+          wget -O jin18.txt "https://raw.githubusercontent.com/hafrey1/LunaTV-config/refs/heads/main/jin18.txt"
 
-          # ======================
-          # 下面不用动
-          # ======================
+      - name: Push to Gitee
+        run: |
+          # ========== 只改这里 ==========
+          GITEE_USER="z33ss"
+          GITEE_REPO="box"
+          # ==============================
+
           git config --global user.name "Auto Sync"
           git config --global user.email "sync@github.com"
 
-          # 克隆 Gitee 仓库（用 Token 免密）
-          git clone https://${GITEE_USER}:${{ secrets.GITEE_TOKEN }}@gitee.com/${GITEE_USER}/${GITEE_REPO}.git gitee_repo
-
-          # 复制文件
-          cp -f "$SYNC_FILE" "gitee_repo/$DEST_FILE"
-
-          # 提交并推送
-          cd gitee_repo
-          git add .
-          git commit -m "Auto sync from GitHub" || exit 0
+          git clone https://${GITEE_USER}:${{ secrets.GITEE_TOKEN }}@gitee.com/${GITEE_USER}/${GITEE_REPO}.git repo
+          cp -f jin18.txt repo/
+          cd repo
+          git add jin18.txt
+          git commit -m "Auto sync jin18.txt" || exit 0
           git push
